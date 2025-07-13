@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using FuzzySharp;
+using Microsoft.EntityFrameworkCore;
+using QuizPlatform.Application.Validators;
 using QuizPlatform.Core.Common;
 using QuizPlatform.Core.DTOs;
 using QuizPlatform.Core.Entities;
@@ -21,17 +23,33 @@ namespace QuizPlatform.Application.Services
             _questionRepo = questionRepo;
             _optionRepo = optionRepo;
         }
-        
+
         #region Text Questions
         public async Task<ApiResponse> CreateTextQuestion(TextQuestionDto dto)
         {
+            var existingQuestions = await _questionRepo.FindAll()
+                .Where(q => q.QuizId == dto.QuizId && q.Type == AnswerType.Text)
+                .Select(q => q.Text)
+                .ToListAsync();
+
+            var similarityChecker = new SimilarityChecker(80); 
+
+            var (isSimilar, similarityScore, similarQuestion) =
+                similarityChecker.CheckSimilarity(dto.Text, existingQuestions);
+
+            if (isSimilar)
+            {
+                return new ApiResponse(400,
+                    $"A similar text question already exists: \"{similarQuestion}\".",
+                    null);
+            }
+
             var question = new Question
             {
                 QuizId = dto.QuizId,
                 Text = dto.Text,
                 Type = AnswerType.Text,
                 CorrectAnswerText = dto.CorrectAnswerText
-
             };
 
             _questionRepo.Add(question);
@@ -39,6 +57,7 @@ namespace QuizPlatform.Application.Services
 
             return new ApiResponse(200, "Text question added successfully.", question);
         }
+
         public async Task<ApiResponse> EditTextQuestion(UpdateTextQuestionDto model)
         {
             var question = await _questionRepo.GetByIdAsync(model.Id);
@@ -48,6 +67,23 @@ namespace QuizPlatform.Application.Services
             if (question.Type != AnswerType.Text)
                 return new ApiResponse(400, "Invalid question type for text edit.");
 
+            var existingQuestions = await _questionRepo.FindAll()
+                .Where(q => q.QuizId == model.QuizId && q.Type == AnswerType.Text && q.Id != model.Id)
+                .Select(q => q.Text)
+                .ToListAsync();
+
+            var similarityChecker = new SimilarityChecker(80);
+
+            var (isSimilar, similarityScore, similarQuestion) =
+                similarityChecker.CheckSimilarity(model.Text, existingQuestions);
+
+            if (isSimilar)
+            {
+                return new ApiResponse(400,
+                    $"A similar text question already exists: \"{similarQuestion}\"",
+                    null);
+            }
+
             question.Text = model.Text;
             question.CorrectAnswerText = model.CorrectAnswerText;
 
@@ -55,11 +91,44 @@ namespace QuizPlatform.Application.Services
             return new ApiResponse(200, "Text question updated successfully.");
         }
 
+
         #endregion
 
         #region Options Question
         public async Task<ApiResponse> CreateOptionsQuestion(OptionsQuestionDto dto)
         {
+            var validator = new OptionsQuestionDtoValidator();
+            var validationResult = validator.Validate(dto);
+            if (!validationResult.IsValid)
+            {
+                var errors = validationResult.Errors.Select(e => new
+                {
+                    Field = e.PropertyName,
+                    Error = e.ErrorMessage
+                });
+                var errorMessages = string.Join(" | ", validationResult.Errors
+                    .Select(e => $"{e.PropertyName}: {e.ErrorMessage}"));
+
+                return new ApiResponse(400, $"Validation failed: {errorMessages}", errors);
+            }
+
+            var existingQuestions = await _questionRepo.FindAll()
+                .Where(q => q.QuizId == dto.QuizId)
+                .Select(q => q.Text)
+                .ToListAsync();
+
+            var similarityChecker = new SimilarityChecker(80);
+
+            var (isSimilar, similarityScore, similarQuestion) =
+                similarityChecker.CheckSimilarity(dto.Text, existingQuestions);
+
+            if (isSimilar)
+            {
+                return new ApiResponse(400,
+                    $"A similar question already exists: \"{similarQuestion}\" .",
+                    null);
+            }
+
             var question = new Question
             {
                 QuizId = dto.QuizId,
@@ -71,18 +140,20 @@ namespace QuizPlatform.Application.Services
             await _questionRepo.SaveChangesAsync();
 
             var options = new List<Option>
-                         {
-                         new Option { OptionText = dto.OptionA, IsCorrect = dto.CorrectAnswer == "A", QuestionId = question.Id },
-                         new Option { OptionText = dto.OptionB, IsCorrect = dto.CorrectAnswer == "B", QuestionId = question.Id },
-                         new Option { OptionText = dto.OptionC, IsCorrect = dto.CorrectAnswer == "C", QuestionId = question.Id },
-                         new Option { OptionText = dto.OptionD, IsCorrect = dto.CorrectAnswer == "D", QuestionId = question.Id }
-                         };
+            {
+                new Option { OptionText = dto.OptionA, IsCorrect = dto.CorrectAnswer == "A", QuestionId = question.Id },
+                new Option { OptionText = dto.OptionB, IsCorrect = dto.CorrectAnswer == "B", QuestionId = question.Id },
+                new Option { OptionText = dto.OptionC, IsCorrect = dto.CorrectAnswer == "C", QuestionId = question.Id },
+                new Option { OptionText = dto.OptionD, IsCorrect = dto.CorrectAnswer == "D", QuestionId = question.Id }
+            };
 
             await _optionRepo.AddRangeAsync(options);
             await _optionRepo.SaveChangesAsync();
 
-            return new ApiResponse(200, "Options question added successfully.", null);
+            return new ApiResponse(200, "Question added successfully.", null);
         }
+
+
         public async Task<ApiResponse> EditChoicesQuestion(UpdateChoicesQuestionDto model)
         {
             var question = await _questionRepo
@@ -101,6 +172,37 @@ namespace QuizPlatform.Application.Services
             if (question.Question.Type != AnswerType.Choices)
                 return new ApiResponse(400, "Invalid question type for choices edit.");
 
+            var existingQuestions = await _questionRepo.FindAll()
+                .Where(q => q.QuizId == model.QuizId && q.Type == AnswerType.Choices && q.Id != model.Id)
+                .Select(q => q.Text)
+                .ToListAsync();
+
+            var similarityChecker = new SimilarityChecker(80);
+
+            var (isSimilar, similarityScore, similarQuestion) =
+                similarityChecker.CheckSimilarity(model.Text, existingQuestions);
+
+            if (isSimilar)
+            {
+                return new ApiResponse(400,
+                    $"A similar choices question already exists: \"{similarQuestion}\".",
+                    null);
+            }
+
+            if (model.Options.Any(o => string.IsNullOrWhiteSpace(o.OptionText)))
+            {
+                return new ApiResponse(400, "All option values must be provided and not empty.");
+            }
+
+            // تحقق من التكرار بعد Normalization
+            var normalizedOptions = model.Options
+                .Select(o => o.OptionText?.Trim().ToLower());
+
+            if (normalizedOptions.Distinct().Count() != normalizedOptions.Count())
+            {
+                return new ApiResponse(400, "Option values must be unique (case-insensitive).");
+            }
+
             question.Question.Text = model.Text;
 
             foreach (var inputOption in model.Options)
@@ -117,11 +219,11 @@ namespace QuizPlatform.Application.Services
                 opt.IsCorrect = (opt.Id == model.CorrectOptionIndex);
             }
 
-
             await _questionRepo.SaveChangesAsync();
 
             return new ApiResponse(200, "Choices question updated successfully.");
         }
+
 
         #endregion
 
@@ -134,7 +236,7 @@ namespace QuizPlatform.Application.Services
 
             if (question.QuizId != quizId)
                 return new ApiResponse(400, "This question does not belong to this quiz.");
-
+            _questionRepo.Delete(question);
             await _questionRepo.SaveChangesAsync();
 
             return new ApiResponse(200, "Question deleted successfully.");

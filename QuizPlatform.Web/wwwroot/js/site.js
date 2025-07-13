@@ -130,11 +130,15 @@ function saveOptionsQuestion() {
         type: 'POST',
         data: formData,
         success: function (response) {
-            $('#optionsQuestionModal').modal('hide');
-
-            toastr.success(response.message || 'Options Question Saved!');
-            setTimeout(() => location.reload(), 500);
+            if (response.statusCode === 200) {
+                $('#optionsQuestionModal').modal('hide');
+                toastr.success(response.message || 'Options Question Saved!');
+                setTimeout(() => location.reload(), 500);
+            } else {
+                toastr.error(response.message || 'Something went wrong!');
+            }
         },
+
         error: function (xhr) {
             toastr.error('Something went wrong!');
         }
@@ -332,13 +336,18 @@ function EditChoicesQuestion(questionId) {
         },
         contentType: 'application/json',
         data: JSON.stringify(dto),
-        success: function (res) {
-            toastr.success('Question updated successfully!');
-            $('#editQuestionModal-' + questionId).modal('hide');
-            setTimeout(() => location.reload(), 1000);
+        success: function (response) {
+            if (response.statusCode === 200) {
+                toastr.success(response.message || 'Question updated successfully!');
+                $('#editQuestionModal-' + questionId).modal('hide');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                toastr.error(response.message || 'Something went wrong!');
+            }
         },
-        error: function (err) {
-            toastr.error('Something went wrong!');
+        error: function () {
+            toastr.error('An unexpected error occurred.');
         }
+
     });
 }

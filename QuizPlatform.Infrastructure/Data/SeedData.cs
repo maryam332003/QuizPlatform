@@ -27,7 +27,7 @@ namespace QuizPlatform.Infrastructure.Data
             }
 
             // Add default admin user
-            var adminEmail = "admin@gemini.com";
+            var adminEmail = "admin@gmail.com";
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
 
             if (adminUser == null)

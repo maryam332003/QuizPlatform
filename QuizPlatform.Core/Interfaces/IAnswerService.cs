@@ -5,6 +5,6 @@ namespace QuizPlatform.Core.Interfaces
     public interface IAnswerService
     {
         Task<ApiResponse> SubmitAnswers(QuizAnswersDto model);
-        Task<ApiResponse> CheckUserScoreA(string userId, int quizId);
+        Task<ApiResponse> CheckUserScore(string userId, int quizId);
     }
 }

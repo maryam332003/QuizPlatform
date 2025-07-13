@@ -44,7 +44,7 @@ namespace QuizPlatform.Application.Services
 
             return new ApiResponse(200, "Answers submitted successfully.");
         }
-        public async Task<ApiResponse> CheckUserScoreA(string userId, int quizId)
+        public async Task<ApiResponse> CheckUserScore(string userId, int quizId)
         {
             var userAnswersQuery = from a in _answerRepo.FindAll()
                                    where a.UserId == userId
@@ -66,6 +66,8 @@ namespace QuizPlatform.Application.Services
 
             int correctCount = 0;
 
+            var similarityChecker = new SimilarityChecker(80);
+
             foreach (var item in userAnswers)
             {
                 if (item.Question.Type == AnswerType.Text)
@@ -73,11 +75,11 @@ namespace QuizPlatform.Application.Services
                     if (!string.IsNullOrWhiteSpace(item.Answer.AnswerText) &&
                         !string.IsNullOrWhiteSpace(item.Question.CorrectAnswerText))
                     {
-                        int similarityScore = Fuzz.Ratio(
-                            item.Answer.AnswerText.Trim().ToLower(),
-                            item.Question.CorrectAnswerText.Trim().ToLower());
+                        var (isSimilar, similarityScore, _) = similarityChecker.CheckSimilarity(
+                            item.Answer.AnswerText,
+                            new List<string> { item.Question.CorrectAnswerText });
 
-                        if (similarityScore >= 80) 
+                        if (isSimilar)
                         {
                             correctCount++;
                         }
@@ -103,5 +105,6 @@ namespace QuizPlatform.Application.Services
                 CorrectAnswers = correctCount
             });
         }
+
     }
 }

@@ -43,7 +43,7 @@ namespace QuizPlatform.Web.Controllers
             var data = quiz.Data as QuizDetailsForUserDto;
             if (data.HasAnswered)
             {
-                var scoreResult = await _answerService.CheckUserScoreA(userId, Id);
+                var scoreResult = await _answerService.CheckUserScore(userId, Id);
 
                 if (scoreResult.StatusCode == 200 && scoreResult.Data != null)
                 {
@@ -105,7 +105,7 @@ namespace QuizPlatform.Web.Controllers
         public async Task<IActionResult> UserScore(int quizId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-            var result = await _answerService.CheckUserScoreA(userId,quizId);
+            var result = await _answerService.CheckUserScore(userId,quizId);
             return Json(result);
         }
 

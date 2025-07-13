@@ -44,6 +44,7 @@ public class QuizService : IQuizService
         }
 
         quiz.Image = imagePath;
+        quiz.Date = quizDto.Date;
         _quizRepository.Add(quiz);
         await _quizRepository.SaveChangesAsync();
 
