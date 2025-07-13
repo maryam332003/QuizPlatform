@@ -1,0 +1,211 @@
+﻿@using QuizPlatform.Core.DTOs
+@using QuizPlatform.Core.Entities
+@{
+    ViewBag.Title = "Add Question";
+    int quizId = ViewBag.QuizId;
+    var questions = ViewBag.Questions as List<QuestionWithOptionsDto>;
+}
+
+<div class="container py-5">
+
+    <!-- Title -->
+    <div class="text-center mb-5">
+        <h2 class="fw-bold text-primary">Add Questions for Quiz #@quizId</h2>
+        <p class="text-muted mb-0">You can add text or multiple choice questions easily</p>
+    </div>
+
+    <!-- Add Buttons -->
+    <div class="text-center mb-5">
+        <div class="btn-group gap-3">
+            <button type="button" class="btn btn-outline-primary btn-lg px-5 rounded-pill shadow-sm"
+                    data-bs-toggle="modal" data-bs-target="#textQuestionModal">
+                <i class="bi bi-chat-text me-2"></i> Add Text Question
+            </button>
+
+            <button type="button" class="btn btn-outline-success btn-lg px-5 rounded-pill shadow-sm"
+                    data-bs-toggle="modal" data-bs-target="#optionsQuestionModal">
+                <i class="bi bi-list-ul me-2"></i> Add Multiple Choice
+            </button>
+        </div>
+    </div>
+
+    <!-- Existing Questions -->
+    <div class="mt-5">
+        <h4 class="fw-bold mb-4">Existing Questions</h4>
+
+        @if (questions != null && questions.Any())
+        {
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                @foreach (var question in questions)
+                {
+                    <div class="col">
+                        <div class="card h-100 shadow border-0 rounded-4">
+                            <div class="card-body">
+                                <h5 class="card-title fw-bold mb-3 text-dark">@question.Text</h5>
+                                <span class="badge rounded-pill bg-secondary mb-3">@question.Type</span>
+
+                                @if (question.Type == AnswerType.Text && !string.IsNullOrWhiteSpace(question.CorrectAnswerText))
+                                {
+                                    <div class="alert alert-primary py-2 px-3 small">
+                                        <strong>Correct Answer:</strong> @question.CorrectAnswerText
+                                    </div>
+                                }
+
+                                @if (question.Type == AnswerType.Choices && question.Options != null && question.Options.Any())
+                                {
+                                    <ul class="list-group list-group-flush small mb-3">
+                                        @foreach (var option in question.Options)
+                                        {
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                <span>@option.OptionText</span>
+                                                @if (option.IsCorrect)
+                                                {
+                                                    <span class="badge bg-success">Correct</span>
+                                                }
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+
+                                <!-- Actions -->
+                                <div class="d-flex justify-content-end gap-2 mt-3">
+                                    <button class="btn btn-sm btn-outline-primary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editQuestionModal-@question.Id">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </button>
+
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            onclick="deleteQuestion(@question.Id, @quizId)">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="text-center text-muted">
+                <i class="bi bi-info-circle fs-3"></i>
+                <p class="mt-2">No questions added yet.</p>
+            </div>
+        }
+    </div>
+
+    <!-- Add Modals -->
+    <div class="modal fade" id="textQuestionModal" tabindex="-1" aria-labelledby="textQuestionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                @Html.Partial("Partials/_AddTextQuestionForm", quizId)
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="optionsQuestionModal" tabindex="-1" aria-labelledby="optionsQuestionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                @Html.Partial("Partials/_AddOptionsQuestionForm", quizId)
+            </div>
+        </div>
+    </div>
+@if (questions?.Any() == true)
+{
+    <!-- Edit Modals Per Question -->
+    @foreach (var question in questions)
+    {
+        <div class="modal fade" id="editQuestionModal-@question.Id" tabindex="-1" aria-labelledby="editQuestionModalLabel-@question.Id" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered @(question.Type == AnswerType.Choices ? "modal-lg" : "")">
+                <div class="modal-content">
+                        <form id="editQuestionForm-@question.Id">
+                            @Html.AntiForgeryToken()
+                        <input type="hidden" name="Id" value="@question.Id" />
+                        <input type="hidden" name="QuizId" value="@quizId" />
+
+                        <div class="modal-header">
+                            <h5 class="modal-title">Edit @question.Type Question</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label>Question Text</label>
+                                <textarea name="Text" class="form-control" required>@question.Text</textarea>
+                            </div>
+
+                            @if (question.Type == AnswerType.Text)
+                            {
+                                <div class="mb-3">
+                                    <label>Correct Answer</label>
+                                    <textarea name="CorrectAnswerText" class="form-control" required>@question.CorrectAnswerText</textarea>
+                                </div>
+                            }
+
+                            @if (question.Type == AnswerType.Choices)
+                            {
+                                @for (int i = 0; i < question.Options.Count; i++)
+                                {
+                                    var opt = question.Options[i];
+                                    var letter = (char)('A' + i);
+                                    <div class="mb-3">
+                                            <input type="hidden" name="Options[@i].Id" value="@opt.Id" />
+
+                                        <label>Option @letter</label>
+                                        <input name="Options[@i].OptionText" value="@opt.OptionText" class="form-control" />
+
+                                        <div class="form-check mt-1">
+                                                <input type="radio"
+                                                       name="CorrectOptionIndex"
+                                                       value="@opt.Id"
+                                                @(opt.IsCorrect ? "checked" : "")
+                                                   class="form-check-input" />
+                                            <label class="form-check-label">Correct Answer</label>
+                                        </div>
+                                    </div>
+                                }
+
+
+                            }
+                        </div>
+
+                        <div class="modal-footer">
+                                <button type="button"
+                                        class="btn btn-primary w-100"
+                                        onclick="submitQuestion(@question.Id, '@question.Type')">
+                                    Save Changes
+                                </button>
+                            </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+}
+</div>
+
+
+<style>
+    .card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+    .card-title {
+        min-height: 50px;
+    }
+
+    .btn-group .btn {
+        font-weight: 500;
+    }
+
+    .alert-primary {
+        background-color: #eef6ff;
+        border: none;
+    }
+</style>

@@ -1,0 +1,32 @@
+﻿@model List<QuizPlatform.Core.Entities.Quiz>
+
+@{
+    ViewBag.Title = "All Quizzes";
+}
+<form id="searchForm" onsubmit="event.preventDefault(); filterQuizzes();">
+    <div class="input-group mb-4">
+        <input type="text" id="searchInput" name="search" class="form-control" placeholder="Search by quiz name..." />
+        <button type="submit" class="btn btn-primary">Search</button>
+    </div>
+</form>
+
+<!-- هنا الداتا هتتحط -->
+<div id="quizContainer">
+    @Html.Partial("Partials/_QuizCardsPartial", Model)
+</div>
+
+<style>
+    .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+
+    .card-img-top {
+        border-top-left-radius: .75rem;
+        border-top-right-radius: .75rem;
+    }
+</style>

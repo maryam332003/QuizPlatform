@@ -1,0 +1,153 @@
+﻿@using QuizPlatform.Core.Entities
+@model IEnumerable<Quiz>
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold page-title main-color">Manage Quizzes</h2>
+        <a class="btn btn-primary add-quiz-btn" data-bs-toggle="modal" data-bs-target="#addQuizModal">
+            <i class="bi bi-plus-circle me-1"></i> Add New Quiz
+        </a>
+    </div>
+
+    <div class="row g-4">
+        @foreach (var quiz in Model)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card quiz-card h-100">
+                    @if (!string.IsNullOrEmpty(quiz.Image))
+                    {
+                        <img src="@quiz.Image" alt="@quiz.Name" class="img-fluid rounded-top" style="height: 200px; object-fit: cover; width: 100%;" />
+                    }
+                    else
+                    {
+                        <div class="bg-light d-flex justify-content-center align-items-center" style="height: 200px;">
+                            <span class="text-muted">No Image</span>
+                        </div>
+                    }
+
+                    <div class="card-body d-flex flex-column p-3">
+                        <h5 class="fw-bold mb-2 main-color">@quiz.Name</h5>
+
+                        <div class="quiz-card-meta mb-1">
+                            <i class="bi bi-calendar2-week"></i> @quiz.Date.ToShortDateString()
+                        </div>
+                        
+                        
+                        <div class="quiz-card-meta mb-1">
+                            @quiz.Description
+                        </div>
+
+                        <div class="mt-auto d-grid gap-2">
+                            <button class="btn btn-outline-primary"
+                                    data-id="@quiz.Id"
+                                    data-name="@quiz.Name"
+                                    data-description="@quiz.Description"
+                                    data-image="@quiz.Image"
+                                    onclick="openEditQuizModal(this)">
+                                <i class="bi bi-pencil-square"></i> Edit
+                            </button>
+
+                            <button class="btn btn-outline-danger"
+                                    onclick="DeleteQuiz(@quiz.Id)">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+
+                            <a class="btn btn-outline-secondary"
+                               asp-controller="Question"
+                               asp-action="Index"
+                               asp-route-quizId="@quiz.Id">
+                                <i class="bi bi-list-ul"></i> Manage Questions
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Add Quiz Modal -->
+<div class="modal fade" id="addQuizModal" tabindex="-1" aria-labelledby="addQuizModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-rounded">
+            <div class="modal-header main-BackgroundColor text-white">
+                <h5 class="modal-title" id="addQuizModalLabel">Add New Quiz</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form id="NewQuizForm" onsubmit="event.preventDefault(); AddQuiz();" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input name="Name" type="text" class="form-control" required />
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Date</label>
+                        <input name="Date" type="date" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="Description" class="form-control" rows="3" required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Image</label>
+                        <input name="Image" type="file" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Quiz</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Quiz Modal -->
+<div class="modal fade" id="editQuizModal" tabindex="-1" aria-labelledby="editQuizModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-rounded">
+            <div class="modal-header main-BackgroundColor text-white">
+                <h5 class="modal-title" id="editQuizModalLabel">Edit Quiz</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form id="EditQuizForm" onsubmit="event.preventDefault(); UpdateQuiz();" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+
+                <div class="modal-body">
+                    <input type="hidden" name="Id" id="editQuizId" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input name="Name" id="editQuizName" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="Description" id="editQuizDescription" class="form-control"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Image</label>
+                        <input name="Image" type="file" class="form-control" />
+                        <div class="mt-2">
+                            <img id="editQuizImagePreview" src="" class="img-fluid rounded" style="max-height: 150px;" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

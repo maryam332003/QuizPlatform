@@ -1,0 +1,25 @@
+﻿@model int 
+
+<form id="textForm" onsubmit="event.preventDefault();saveTextQuestion()">
+    @Html.AntiForgeryToken()
+
+    <div class="modal-header text-light">
+        <h5 class="modal-title" id="textQuestionModalLabel">Add Text Question</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    <div class="modal-body">
+        <input type="hidden" name="QuizId" value="@Model" />
+        <div class="mb-3">
+            <label class="form-label">Question</label>
+            <textarea name="Text" class="form-control" rows="4" placeholder="Type your question here..." required></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Correct Answer</label>
+            <textarea name="CorrectAnswerText" class="form-control" rows="4" placeholder="Type your answer here..." required></textarea>
+        </div>
+    </div>
+    <button type="submit"  class="btn btn-primary w-100">
+        Save Text Question
+    </button>
+</form>

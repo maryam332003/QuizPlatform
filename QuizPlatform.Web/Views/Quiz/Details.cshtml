@@ -1,0 +1,79 @@
+﻿@using QuizPlatform.Core.Entities
+@model QuizPlatform.Core.DTOs.QuizDetailsForUserDto
+
+@{
+    ViewBag.Title = "Answer Quiz";
+}
+
+<div class="container py-5">
+    <h2 class="fw-bold mb-4">Answer Quiz</h2>
+
+    @if (Model.HasAnswered)
+    {
+        <div class="alert alert-info mb-2">
+            ✅ You have already answered this quiz.
+        </div>
+
+        <div class="alert alert-success">
+            Your score: <strong>@ViewBag.Score</strong>
+        </div>
+    }
+
+    <form id="AnswerForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" id="QuizId" name="QuizId" value="@Model.QuizId" />
+
+        @for (int i = 0; i < Model.Questions.Count; i++)
+        {
+            var question = Model.Questions[i];
+            <div class="quiz-question-block mb-4 p-4 border rounded shadow-sm" data-question-id="@question.Id">
+                <h5 class="fw-bold">@question.Text</h5>
+
+                @if (question.Type == AnswerType.Text)
+                {
+                    <input type="text"
+                           class="form-control mt-2"
+                           value="@question.UserAnswerText"
+                           placeholder="Your answer here..."
+                           required
+                    @(Model.HasAnswered ? "readonly" : "") />
+                }
+                else if (question.Type == AnswerType.Choices && question.Options != null)
+                {
+                    <div class="mt-2">
+                        @foreach (var option in question.Options)
+                        {
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="radio"
+                                       name="option-@question.Id"
+                                       value="@option.Id"
+                                       required
+                                @(question.SelectedOptionId == option.Id ? "checked" : "")
+                                @(Model.HasAnswered ? "disabled" : "") />
+                                <label class="form-check-label">
+                                    @option.OptionText
+                                </label>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        @if (!Model.HasAnswered)
+        {
+            <button type="button"
+                    onclick="submitQuizAnswers()"
+                    class="btn btn-primary w-100">
+                ✅ Submit Answers
+            </button>
+        }
+        else
+        {
+            <div class="alert alert-success mt-3">
+                ✔️ Your answers have been saved.
+            </div>
+        }
+    </form>
+</div>

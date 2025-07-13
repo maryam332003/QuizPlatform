@@ -1,0 +1,48 @@
+﻿@model int
+
+<form id="optionsForm" onsubmit="event.preventDefault();saveOptionsQuestion()">
+    @Html.AntiForgeryToken()
+
+    <div class="modal-header text-light">
+        <h5 class="modal-title" id="optionsQuestionModalLabel">Add Multiple Choice Question</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    <div class="modal-body">
+        <input type="hidden" name="QuizId" value="@Model" />
+        <div class="mb-3">
+            <label class="form-label">Question</label>
+            <textarea name="Text" class="form-control" rows="4" placeholder="Type your question here..." required></textarea>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label>Option A</label>
+                <input name="OptionA" class="form-control" placeholder="Option A" required />
+            </div>
+            <div class="col-md-6">
+                <label>Option B</label>
+                <input name="OptionB" class="form-control" placeholder="Option B" required />
+            </div>
+            <div class="col-md-6">
+                <label>Option C</label>
+                <input name="OptionC" class="form-control" placeholder="Option C" required />
+            </div>
+            <div class="col-md-6">
+                <label>Option D</label>
+                <input name="OptionD" class="form-control" placeholder="Option D" required />
+            </div>
+        </div>
+        <div class="mb-3 mt-3">
+            <label>Correct Answer</label>
+            <select name="CorrectAnswer" class="form-select" required>
+                <option value="" disabled selected>-- Select Correct Answer --</option>
+                <option value="A">Option A</option>
+                <option value="B">Option B</option>
+                <option value="C">Option C</option>
+                <option value="D">Option D</option>
+            </select>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="submit"  class="btn btn-success w-100">Save Multiple Choice</button>
+    </div>
+</form>
