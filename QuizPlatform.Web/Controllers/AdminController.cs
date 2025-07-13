@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using QuizPlatform.Core.Interfaces;
 
 public class AdminController : Controller
@@ -9,6 +10,7 @@ public class AdminController : Controller
     {
         _quizService = quizService;
     }
+    [Authorize(Roles ="admin")]
 
     public IActionResult Index()
     {

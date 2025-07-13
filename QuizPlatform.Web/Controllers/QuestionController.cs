@@ -7,7 +7,6 @@ using QuizPlatform.Core.Interfaces;
 
 namespace QuizPlatform.Web.Controllers
 {
-    [Authorize]
     public class QuestionController : Controller
     {
         private readonly IQuestionService _questionService;
@@ -16,7 +15,7 @@ namespace QuizPlatform.Web.Controllers
         {
             _questionService = questionService;
         }
-
+        [Authorize]
         public async Task<IActionResult> Index(int quizId)
         {
             var response =await _questionService.QuizQuestions(quizId);

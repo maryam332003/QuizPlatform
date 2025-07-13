@@ -113,9 +113,11 @@ namespace QuizPlatform.Application.Services
             }
 
             var existingQuestions = await _questionRepo.FindAll()
-                .Where(q => q.QuizId == dto.QuizId)
+                .Where(q => q.QuizId == dto.QuizId && q.Type == AnswerType.Choices)
                 .Select(q => q.Text)
                 .ToListAsync();
+      
+
 
             var similarityChecker = new SimilarityChecker(80);
 

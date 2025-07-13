@@ -78,7 +78,6 @@ function openEditQuizModal(element) {
     var modal = new bootstrap.Modal(document.getElementById('editQuizModal'));
     modal.show();
 }
-
 function UpdateQuiz() {
  
     var form = $('#EditQuizForm')[0];
@@ -95,6 +94,7 @@ function UpdateQuiz() {
                 $('#editQuizModal').modal('hide');
                 toastr.success(response.message || 'Quiz updated!');
                 setTimeout(() => location.reload(), 1000);
+
             } else {
                 toastr.error(response.message || 'Update failed.');
             }
@@ -112,10 +112,14 @@ function saveTextQuestion() {
         type: 'POST',
         data: formData,
         success: function (response) {
-            toastr.success(response.message || 'Text Question Saved!');
-            $('#textQuestionModal').modal('hide');
+            if (response.statusCode === 200) {
+                toastr.success(response.message || 'Text Question Saved!');
+                $('#textQuestionModal').modal('hide');
 
-            setTimeout(() => location.reload(), 500);
+                setTimeout(() => location.reload(), 500);
+            } else {
+                toastr.error(response.message || 'Something went wrong!');
+            }
         },
         error: function (xhr) {
             toastr.error('Something went wrong!');
@@ -191,10 +195,14 @@ function UpdateTextQuestion() {
         type: 'POST',
         data: formData,
         success: function (response) {
-            $('#optionsQuestionModal').modal('hide');
+            if (response.statusCode === 200) {
+                $('#optionsQuestionModal').modal('hide');
 
-            toastr.success(response.message || 'Options Question Saved!');
-            setTimeout(() => location.reload(), 500);
+                toastr.success(response.message || 'Options Question Saved!');
+                setTimeout(() => location.reload(), 500);
+            } else {
+                toastr.error(response.message || 'Something went wrong!');
+            }
         },
         error: function (xhr) {
             toastr.error('Something went wrong!');
@@ -244,11 +252,9 @@ function submitQuizAnswers() {
         type: 'POST',
         contentType: 'application/json',
         data: JSON.stringify(data),
-        success: function (res) {
+        success: function (response) {
             checkUserScore(quizId);
             setTimeout(() => location.reload(), 3000);
-
-
         },
         error: function () {
             toastr.error('Something went wrong!');
@@ -266,7 +272,6 @@ function checkUserScore(quizId) {
         }
     });
 }
-
 function submitQuestion(questionId, questionType) {
     if (questionType === 'Text') {
         EditQuestionText(questionId);
@@ -276,7 +281,6 @@ function submitQuestion(questionId, questionType) {
         toastr.error('Unknown question type!');
     }
 }
-
 function EditQuestionText(questionId) {
     var form = $('#editQuestionForm-' + questionId);
 
@@ -295,17 +299,21 @@ function EditQuestionText(questionId) {
         },
         contentType: 'application/json',
         data: JSON.stringify(dto),
-        success: function (res) {
-            toastr.success('Question updated successfully!');
-            $('#editQuestionModal-' + questionId).modal('hide');
-            setTimeout(() => location.reload(), 1000);
+        success: function (response) {
+
+            if (response.statusCode === 200) {
+                toastr.success('Question updated successfully!');
+                $('#editQuestionModal-' + questionId).modal('hide');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                toastr.error(response.message || 'Something went wrong!');
+            }
         },
         error: function (err) {
             toastr.error('Something went wrong!');
         }
     });
 }
-
 function EditChoicesQuestion(questionId) {
     var form = $('#editQuestionForm-' + questionId);
 
@@ -316,8 +324,6 @@ function EditChoicesQuestion(questionId) {
         CorrectOptionIndex: parseInt(form.find('input[name="CorrectOptionIndex"]:checked').val()),
         Options: []
     };
-
-    // لفي على كل الـ Options وخدي النص والـ Id بتاعها
     form.find('input[name^="Options"][name$=".Id"]').each(function (index) {
         var optionId = $(this).val();
         var optionText = form.find('input[name="Options[' + index + '].OptionText"]').val();

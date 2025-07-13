@@ -15,6 +15,7 @@ namespace QuizPlatform.Web.Controllers
             _authService = authService;
         }
         #region Register
+        [AllowAnonymous]
         public IActionResult Register()
         {
             return View();
